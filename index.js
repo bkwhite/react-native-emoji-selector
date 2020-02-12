@@ -47,14 +47,6 @@ export const Categories = {
   objects: {
     symbol: "💡",
     name: "Objects"
-  },
-  symbols: {
-    symbol: "🔣",
-    name: "Symbols"
-  },
-  flags: {
-    symbol: "🏳️‍🌈",
-    name: "Flags"
   }
 };
 
