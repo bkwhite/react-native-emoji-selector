@@ -54,7 +54,7 @@ export const Categories = {
     name: "Symbols"
   },
   flags: {
-    symbol: "🏳️‍🌈",
+    symbol: "🏳️‍🌈🔣",
     name: "Flags"
   }
 };
@@ -70,10 +70,9 @@ const categoryKeys = Object.keys(Categories);
 
 const TabBar = ({ theme, activeCategory, onPress, width, disabledCatagories }) => {
   const tabSize = width / categoryKeys.length;
-
-  return categoryKeys.map(c => {
+  return categoryKeys.filter(c => !disabledCatagories.includes(c)).map(c => {
     const category = Categories[c];
-    if (c !== "all" && disabledCatagories.indexOf(c) === -1)
+    if (c !== "all")
       return (
         <TouchableOpacity
           key={category.name}

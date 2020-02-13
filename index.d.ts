@@ -19,7 +19,7 @@ declare module "react-native-emoji-selector" {
     places = "places",
     objects = "objects",
     symbols = "symbols",
-    flag = "flag"
+    flags = "flags"
   }
 
   export interface EmojiSelectorProps {
@@ -31,7 +31,7 @@ declare module "react-native-emoji-selector" {
     showHistory?: boolean;
     showSectionTitles?: boolean;
     category?: Categories;
-    disabledCatagories?: Categories[]
+    disabledCatagories?: string[]
     columns?: number;
   }
 
