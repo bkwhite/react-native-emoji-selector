@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import PropTypes from "prop-types";
 import {
   View,
   Text,
@@ -7,13 +6,11 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
-  Dimensions,
   ActivityIndicator,
   AsyncStorage,
   FlatList
 } from "react-native";
 import emoji from "emoji-datasource";
-import "string.fromcodepoint";
 
 export const Categories = {
   all: {
@@ -24,9 +21,13 @@ export const Categories = {
     symbol: "🕘",
     name: "Recently used"
   },
+  emotion: {
+    symbol: "😀",
+    name: "Smileys & Emotion"
+  },
   people: {
-    symbol: "😊",
-    name: "Smileys & People"
+    symbol: "🧑",
+    name: "People & Body"
   },
   nature: {
     symbol: "🦄",
@@ -47,6 +48,14 @@ export const Categories = {
   objects: {
     symbol: "💡",
     name: "Objects"
+  },
+  symbols: {
+    symbol: "🔣",
+    name: "Symbols"
+  },
+  flags: {
+    symbol: "🏳️‍🌈",
+    name: "Flags"
   }
 };
 
@@ -57,15 +66,14 @@ const filteredEmojis = emoji.filter(e => !e["obsoleted_by"]);
 const emojiByCategory = category =>
   filteredEmojis.filter(e => e.category === category);
 const sortEmoji = list => list.sort((a, b) => a.sort_order - b.sort_order);
-const { width } = Dimensions.get("screen");
 const categoryKeys = Object.keys(Categories);
 
-const TabBar = ({ theme, activeCategory, onPress }) => {
+const TabBar = ({ theme, activeCategory, onPress, width, disabledCatagories }) => {
   const tabSize = width / categoryKeys.length;
 
   return categoryKeys.map(c => {
     const category = Categories[c];
-    if (c !== "all")
+    if (c !== "all" && disabledCatagories.indexOf(c) === -1)
       return (
         <TouchableOpacity
           key={category.name}
@@ -118,7 +126,8 @@ export default class EmojiSelector extends Component {
     isReady: false,
     history: [],
     emojiList: null,
-    colSize: 0
+    colSize: 0,
+    width: 0
   };
 
   //
@@ -146,20 +155,20 @@ export default class EmojiSelector extends Component {
     this.setState({ searchQuery });
   };
 
-  addToHistoryAsync = async e => {
+  addToHistoryAsync = async emoji => {
     let history = await AsyncStorage.getItem(storage_key);
 
     let value = [];
     if (!history) {
       // no history
-      let record = Object.assign({}, e, { count: 1 });
+      let record = Object.assign({}, emoji, { count: 1 });
       value.push(record);
     } else {
       let json = JSON.parse(history);
-      if (json.filter(r => r.unified === e.unified).length > 0) {
+      if (json.filter(r => r.unified === emoji.unified).length > 0) {
         value = json;
       } else {
-        let record = Object.assign({}, e, { count: 1 });
+        let record = Object.assign({}, emoji, { count: 1 });
         value = [record, ...json];
       }
     }
@@ -225,7 +234,7 @@ export default class EmojiSelector extends Component {
     }
   }
 
-  prerenderEmojis(cb) {
+  prerenderEmojis(callback) {
     let emojiList = {};
     categoryKeys.forEach(c => {
       let name = Categories[c].name;
@@ -235,11 +244,19 @@ export default class EmojiSelector extends Component {
     this.setState(
       {
         emojiList,
-        colSize: Math.floor(width / this.props.columns)
+        colSize: Math.floor(this.state.width / this.props.columns)
       },
-      cb
+      callback
     );
   }
+
+  handleLayout = ({ nativeEvent: { layout } }) => {
+    this.setState({ width: layout.width }, () => {
+      this.prerenderEmojis(() => {
+        this.setState({ isReady: true });
+      });
+    });
+  };
 
   //
   //  LIFECYCLE METHODS
@@ -251,14 +268,6 @@ export default class EmojiSelector extends Component {
     if (showHistory) {
       this.loadHistoryAsync();
     }
-
-    this.prerenderEmojis(() => {
-      this.setState({ isReady: true });
-    });
-  }
-
-  handleLayout = ({ nativeEvent: { layout: { width: layoutWidth } } }) => {
-    this.setState({ colSize: Math.floor(layoutWidth / this.props.columns) });
   }
 
   render() {
@@ -270,6 +279,7 @@ export default class EmojiSelector extends Component {
       showSearchBar,
       showSectionTitles,
       showTabs,
+      disabledCatagories,
       ...other
     } = this.props;
 
@@ -300,6 +310,8 @@ export default class EmojiSelector extends Component {
               activeCategory={category}
               onPress={this.handleTabSelect}
               theme={theme}
+              width={this.state.width}
+              disabledCatagories={disabledCatagories}
             />
           )}
         </View>
@@ -338,37 +350,10 @@ export default class EmojiSelector extends Component {
   }
 }
 
-EmojiSelector.propTypes = {
-  /** Function called when a user selects an Emoji */
-  onEmojiSelected: PropTypes.func.isRequired,
-
-  /** Theme color used for loaders and active tab indicator */
-  theme: PropTypes.string,
-
-  /** Placeholder of search input */
-  placeholder: PropTypes.string,
-
-  /** Toggle the tabs on or off */
-  showTabs: PropTypes.bool,
-
-  /** Toggle the searchbar on or off */
-  showSearchBar: PropTypes.bool,
-
-  /** Toggle the history section on or off */
-  showHistory: PropTypes.bool,
-
-  /** Toggle section title on or off */
-  showSectionTitles: PropTypes.bool,
-
-  /** Set the default category. Use the `Categories` class */
-  category: PropTypes.object,
-
-  /** Number of columns accross */
-  columns: PropTypes.number
-};
 EmojiSelector.defaultProps = {
   theme: "#007AFF",
   category: Categories.all,
+  disabledCatagories: [],
   showTabs: true,
   showSearchBar: true,
   showHistory: false,
