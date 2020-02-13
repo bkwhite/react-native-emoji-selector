@@ -31,7 +31,7 @@ declare module "react-native-emoji-selector" {
     showHistory?: boolean;
     showSectionTitles?: boolean;
     category?: Categories;
-    disabledCatagories?: Catagories[]
+    disabledCatagories?: Categories[]
     columns?: number;
   }
 
